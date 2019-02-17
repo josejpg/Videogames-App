@@ -8,6 +8,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.bson.Document;
+import org.bson.conversions.Bson;
 
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientException;
@@ -15,7 +16,9 @@ import com.mongodb.MongoCommandException;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.MongoTimeoutException;
+import com.mongodb.client.model.Filters;
 import com.mongodb.ServerAddress;
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Sorts;
@@ -127,6 +130,12 @@ public class Videojuegos {
 				case "2":
 					break;
 				case "3":
+					getVideogamesByCompany();
+					System.out.println( "" );
+					System.out.println( "Presiona cualquier tecla para volver al menú." );
+					if( _reader.readLine() != null ) {
+						processMenuOption( showMenu() );
+					}
 					break;
 				case "4":
 					break;
@@ -149,23 +158,113 @@ public class Videojuegos {
 		}
 	}
 	
+	/**
+	 * Get all of the videogames sort by year
+	 * @throws MongoCommandException
+	 */
 	private static void getVideogamesOrderByYear() throws MongoCommandException {
+		FindIterable<Document> resultsVideogames;
+		
 		System.out.println( "" );
 		System.out.println( "- Videojuegos -" );
 		System.out.println( "" );
 		
-		// Get all the videogames sort by "anyo" field ascending
-		// and show its info
-		System.out.println( "Date\tTitle" );
-		for(Document infoVideogame: videogames.find().sort( Sorts.ascending( "anyo" ) ) ) {
-			System.out.println( 
-				String.format( 
-					"%s\t%s", 
-					infoVideogame.getInteger( "anyo" ), 
-					infoVideogame.getString( "titulo" ) 
-				) 
-			);
+		if( videogames.count() > 0 ) {
+			resultsVideogames = videogames
+								.find()
+								.sort( 
+									Sorts.ascending( "anyo" ) 
+								);
+			if( resultsVideogames != null ) {
+				// Get all the videogames sort by "anyo" field ascending
+				// and show its info
+				System.out.println( "Date\tTitle" );
+				for(Document infoVideogame: resultsVideogames ) {
+					System.out.println( 
+						String.format( 
+							"%s\t%s", 
+							infoVideogame.getInteger( "anyo" ), 
+							infoVideogame.getString( "titulo" ) 
+						) 
+					);
+				}
+			}else {
+				System.out.println( "No se han encontrado videojuegos" );
+			}
+		}else {
+			System.out.println( "No se han encontrado videojuegos" );
 		}
+	}
+	
+	private static void getVideogamesByCompany() throws MongoCommandException {
+		FindIterable<Document> resultsCompanies;
+		Bson orderCompanies = Sorts.ascending( "nombre" ) ;
+		FindIterable<Document> resultsVideogames;
+		Bson filterVideogames;
+		Bson orderVideogames = Sorts.ascending( "anyo" );
 		
+		
+		System.out.println( "" );
+		System.out.println( "- Videojuegos -" );
+		System.out.println( "" );
+		System.out.println( "Company\tTitle\tDate" );
+		if( companies.count() > 0 ) {
+			
+			resultsCompanies = companies
+								.find()
+								.sort( 
+									orderCompanies 
+								);
+			
+			// Get all the companies sort by "name" field ascending
+			// and show its videogames
+			for( Document infoCompany : resultsCompanies ) {
+				
+				// Set new filter with the new company
+				filterVideogames = Filters.in( 
+					"companyia", 
+					infoCompany.getInteger( "_id" ) 
+				) ;
+				
+				// Print company's name
+				System.out.println( 
+						String.format( 
+							"%s\t%s\t%s",
+							infoCompany.getString( "nombre" ),
+							"",
+							""
+						) 
+					);
+				
+				// Find videogames by filter set before
+				resultsVideogames = videogames
+									.find( 
+										filterVideogames 
+									)
+									.sort( 
+										orderVideogames
+									);
+				
+				if( resultsVideogames != null ) {
+
+					// Get all the videogames form the actual company sort by "anyo" field ascending
+					// and show its info
+					for( Document infoVideogame: resultsVideogames ) {
+						System.out.println( 
+							String.format( 
+								"%s\t%s\t%s",
+								"",
+								infoVideogame.getInteger( "anyo" ),
+								infoVideogame.getString( "titulo" )
+							) 
+						);
+					}
+				}else {
+					System.out.println( "No se han encontrado videojuegos" );
+				}
+			}
+		}else {
+			System.out.println( "No se han encontrado compañías de videojuegos" );
+		}
 	}
 }
