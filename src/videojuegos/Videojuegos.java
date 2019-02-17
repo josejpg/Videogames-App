@@ -129,6 +129,12 @@ public class Videojuegos {
 					}
 					break;
 				case "2":
+					getCompanies();
+					System.out.println( "" );
+					System.out.println( "Presiona cualquier tecla para volver al menú." );
+					if( _reader.readLine() != null ) {
+						processMenuOption( showMenu() );
+					}
 					break;
 				case "3":
 					getVideogamesByCompany();
@@ -280,6 +286,11 @@ public class Videojuegos {
 		}
 	}
 
+	/**
+	 * Get videogames by name
+	 * @throws IOException
+	 * @throws MongoCommandException
+	 */
 	private static void getVideogameByName() throws IOException, MongoCommandException{
 		BufferedReader _reader = new BufferedReader( new InputStreamReader( System.in ) );
 		String _name = "";
@@ -347,5 +358,40 @@ public class Videojuegos {
 			System.out.println( "No se han encontrado videojuegos con el nombre: " + _name );
 		}
 		
+	}
+
+	/**
+	 * Get all the companies
+	 * @throws MongoCommandException
+	 */
+	private static void getCompanies() throws MongoCommandException {
+		FindIterable<Document> resultsCompanies;
+		Bson orderCompanies = Sorts.ascending( "nombre" ) ;
+		
+		System.out.println( "" );
+		System.out.println( "- Compañías -" );
+		System.out.println( "" );
+		
+		if( companies.count() > 0 ) {
+			
+			resultsCompanies = companies
+								.find()
+								.sort( 
+									orderCompanies 
+								);
+						
+			// Get all the companies sort by "name" field ascending
+			for( Document infoCompany : resultsCompanies ) {
+				System.out.println( 
+					String.format( 
+						"- %s",
+						infoCompany.getString( "nombre" )
+					) 
+				);
+			}
+		
+		}else {
+			System.out.println( "No se hane encontrado compañías." );
+		}
 	}
 }
